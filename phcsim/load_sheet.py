@@ -2,7 +2,6 @@
 Load the input data sheet
 """
 
-import numpy as np
 import pandas as pd
 import sciris as sc
 
