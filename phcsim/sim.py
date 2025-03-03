@@ -8,25 +8,33 @@ import phcsim as phc
 
 class Sim(ss.Sim):
     def __init__(self, path=None, demographics='default', diseases='default', connectors='default', **kw):
-        kw = sc.objdict()
+
+        # Handle data
         self.path = path
         self.d = phc.load_data(path)
         df = self.d['model_pars']
         keys = df.Parameter
         vals = df.Value
         data_pars = {k:v for k,v in zip(keys, vals)}
+
+        # Handle parameters
+        kw = sc.objdict(kw)
         pars = dict(
             start = ss.date(data_pars['Start year']),
             stop = ss.date(data_pars['End year']),
             unit = data_pars['Time unit'],
         )
         kw.update(pars)
+
+        # Handle defaults
         if demographics == 'default':
             kw.demographics = [phc.Deaths(), phc.Births()]
         if diseases == 'default':
             kw.diseases = [phc.Malnutrition(), phc.Measles(), phc.Meningitis(), phc.YellowFever()]
         if connectors == 'default':
             kw.connectors = [phc.Vaccines(), phc.HealthSystem()]
+
+        # Initialize the sim
         super().__init__(**kw)
         return
 
