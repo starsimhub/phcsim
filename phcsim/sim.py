@@ -22,7 +22,7 @@ class Sim(ss.Sim):
         )
         kw.update(pars)
         if demographics == 'default':
-            kw.demographics = [phc.Births(), phc.Deaths()]
+            kw.demographics = [phc.Deaths(), phc.Births()]
         if diseases == 'default':
             kw.diseases = [phc.Malnutrition(), phc.Measles(), phc.Meningitis(), phc.YellowFever()]
         if connectors == 'default':

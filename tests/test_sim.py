@@ -10,7 +10,7 @@ do_plot = False
 
 def test_basic_sim(do_plot=do_plot):
     sc.heading('Testing basic sim')
-    sim = phc.Sim()
+    sim = phc.Sim(demographics=None)
     sim.init()
     sim.run()
     return sim
