@@ -10,7 +10,7 @@ import phcsim as phc
 __all__ = ['data_key_map', 'load_data', 'warn']
 
 data_key_map = {
-    'Demographics': ['Initial_Population', 'Household_Size', 'Fertility_Mortality_Rates', 'Seasonality_Curves'],
+    'Demographics': ['Initial_Population', 'Fertility_Rates', 'Mortality_Rates', 'Household_Size', 'Seasonality_Curves'],
     'Health system contact': ['Intervention_Resources', 'HRH_Requirements'],
     'General model parameters': ['Model_Pars'],
     'System constraints': ['Weekly_Hours_ByCadre', 'Supply_Chain'],
@@ -85,8 +85,9 @@ def load_data(path=None):
         dict: Dictionary mapping sheet names to pandas DataFrames
     """
     if path is None:
-        path = phc.root / 'data' / 'model_inputs.xlsx'
-        phc.warn(f'No path provided, using default: {path}')
+        path = phc.root() / 'data' / 'model_inputs.xlsx'
+        msg = f'No path provided, using default: {path}'
+        phc.warn(msg)
 
     # Load all sheets into a dictionary of dataframes
     dfs = pd.read_excel(path, sheet_name=None, header=None)
