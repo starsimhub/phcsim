@@ -105,10 +105,33 @@ class Births(ss.Births):
 
 class Deaths(ss.Deaths): # TODO: use age-specific data
 
+    def __init__(self, pars=None, **kwargs):
+        super().__init__()
+        self.define_pars(
+            unit = 'month',
+            rate_units = 1.0,
+        )
+        self.update_pars(pars, **kwargs)
+        return
+
     def init_pre(self, sim=None, d=None):
         if sim:
             super().init_pre(sim)
             d = sim.d
 
-        self.df = map_data('mortality', d)
+        df = map_data('mortality', d)
+
+        df_f = sc.dataframe(age=df.min_age, sex='f', value=df.val_f)
+        df_m = sc.dataframe(age=df.min_age, sex='m', value=df.val_m)
+        self.df = df_f.concat(df_m)
+        metadata = dict( # TODO: shouldn't be needed
+            data_cols = dict(sex='sex', age='age', value='value'),
+            sex_keys = {'f':'f', 'm':'m'},
+        )
+        death_rate = ss.standardize_data(data=self.df, metadata=metadata)
+        death_rate = death_rate.unstack(level='age')
+        self.death_rate_data = death_rate
+
+        # self.update_pars(
+        # )
         return
