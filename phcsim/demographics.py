@@ -83,7 +83,7 @@ class Births(ss.Births): # TODO: use age-specific data by subclassing get_births
 
         # Final calculation, corrected for time
         factor = ss.time_ratio(unit1=self.t.unit, dt1=self.t.dt, unit2='year', dt2=1.0)
-        n_new = age_probs.sum() * factor
+        n_new = age_probs.sum() * factor * self.pars.scale_factor
 
         if randomize:
             n_new = np.random.poisson(lam=n_new)
