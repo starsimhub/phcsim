@@ -24,7 +24,7 @@ class Sim(ss.Sim):
         if demographics == 'default':
             kw.demographics = [phc.Births(), phc.Deaths()]
         if diseases == 'default':
-            kw.diseases = [phc.Measles(), phc.Meningitis(), phc.YellowFever(), phc.HPV()]
+            kw.diseases = [phc.Malnutrition(), phc.Measles(), phc.Meningitis(), phc.YellowFever()]
         if connectors == 'default':
             kw.connectors = [phc.Vaccines(), phc.HealthSystem()]
         super().__init__(**kw)
