@@ -2,10 +2,12 @@
 Load the input data sheet
 """
 
+import warnings
 import pandas as pd
 import sciris as sc
+import phcsim as phc
 
-__all__ = ['data_key_map','load_data']
+__all__ = ['data_key_map', 'load_data', 'warn']
 
 data_key_map = {
     'Demographics': ['Initial_Population', 'Household_Size', 'Fertility_Mortality_Rates', 'Seasonality_Curves'],
@@ -82,12 +84,15 @@ def load_data(path=None):
     Returns:
         dict: Dictionary mapping sheet names to pandas DataFrames
     """
-    d = sc.objdict()
+    if path is None:
+        path = phc.root / 'data' / 'model_inputs.xlsx'
+        phc.warn(f'No path provided, using default: {path}')
 
     # Load all sheets into a dictionary of dataframes
     dfs = pd.read_excel(path, sheet_name=None, header=None)
 
     # Parse the sheets
+    d = sc.objdict()
     for key, data_list in data_key_map.items():
         df = dfs[key]
         for data_key in data_list:
@@ -95,6 +100,12 @@ def load_data(path=None):
             d[dk] = parse_block(df, data_key)
 
     return d
+
+
+def warn(msg, category=RuntimeWarning, verbose=False, die=False):
+    """ Helper function to handle warnings -- shortcut to warnings.warn """
+    warnings.warn(msg, category=category, stacklevel=2)
+    return
 
 
 if __name__ == '__main__':
