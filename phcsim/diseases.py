@@ -2,6 +2,8 @@
 Define diseases
 """
 
+import numpy as np
+import sciris as sc
 import starsim as ss
 
 __all__ = ['Measles', 'Meningitis', 'YellowFever', 'Malnutrition']
@@ -13,89 +15,17 @@ class SimpleDisease(ss.Disease):
     def __init__(self, pars=None, **kwargs):
         super().__init__()
         self.define_pars(
-            p_acquire = ss.bernoulli(p=ss.peryear(0.3)), # Probability of acquisition
-            p_death = ss.bernoulli(p=0.1), # Probability of death
+            p_acquire = ss.bernoulli(p=ss.peryear(0.3)), # Probability of acquisition per timestep
+            p_death = ss.bernoulli(p=0.1), # Probability of death per infection
         )
         self.update_pars(pars=pars, **kwargs)
 
         self.define_states(
-            ss.State('susceptible', label='Susceptible'),
             ss.State('infected', label='Infected'),
             ss.FloatArr('ti_infected', label='Time of infection'),
             ss.FloatArr('ti_dead', label='Time of death'),
         )
         return
-
-    def init_pre(self, sim=None, label=None, d=None):
-        """ Initialize including the data """
-        if sim:
-            super().init_pre(sim)
-            d = sim.d
-
-        mortality=
-        self.df = map_data('fertility', d)
-        return
-    pass
-
-
-    """
-    Example non-communicable disease
-
-    This class implements a basic NCD model with risk of developing a condition
-    (e.g., hypertension, diabetes), a state for having the condition, and associated
-    mortality.
-    """
-    def __init__(self, pars=None, **kwargs):
-        super().__init__()
-        self.define_pars(
-            initial_risk = ss.bernoulli(p=0.3), # Initial prevalence of risk factors
-            dur_risk = ss.expon(scale=ss.dur(10)),
-            prognosis = ss.weibull(c=ss.years(2), scale=5), # Time in years between first becoming affected and death
-        )
-        self.update_pars(pars=pars, **kwargs)
-
-        self.define_states(
-            ss.State('at_risk', label='At risk'),
-            ss.State('affected', label='Affected'),
-            ss.FloatArr('ti_affected', label='Time of becoming affected'),
-            ss.FloatArr('ti_dead', label='Time of death'),
-        )
-        return
-
-    @property
-    def not_at_risk(self):
-        return ~self.at_risk
-
-    def init_post(self):
-        """
-        Set initial values for states. This could involve passing in a full set of initial conditions,
-        or using init_prev, or other. Note that this is different to initialization of the State objects
-        i.e., creating their dynamic array, linking them to a People instance. That should have already
-        taken place by the time this method is called.
-        """
-        super().init_post()
-        initial_risk = self.pars['initial_risk'].filter()
-        self.at_risk[initial_risk] = True
-        self.ti_affected[initial_risk] = self.ti + sc.randround(self.pars['dur_risk'].rvs(initial_risk))
-        return initial_risk
-
-    def step_state(self):
-        ti = self.ti
-        deaths = (self.ti_dead == ti).uids
-        self.sim.people.request_death(deaths)
-        if self.pars.log:
-            self.log.add_data(deaths, died=True)
-        self.results.new_deaths[ti] = len(deaths) # Log deaths attributable to this module
-        return
-
-    def step(self):
-        ti = self.ti
-        new_cases = (self.ti_affected == ti).uids
-        self.affected[new_cases] = True
-        prog_years = self.pars.prognosis.rvs(new_cases)
-        self.ti_dead[new_cases] = ti + sc.randround(prog_years / self.t.dt) # TODO: update to allow non-year units
-        super().set_prognoses(new_cases)
-        return new_cases
 
     def init_results(self):
         """
@@ -103,41 +33,68 @@ class SimpleDisease(ss.Disease):
         """
         super().init_results()
         self.define_results(
-            ss.Result('n_not_at_risk', dtype=int,   label='Not at risk'),
-            ss.Result('prevalence',    dtype=float, label='Prevalence'),
-            ss.Result('new_deaths',    dtype=int,   label='Deaths'),
+            ss.Result('new_infections', dtype=int,   label='Infections'),
+            ss.Result('new_deaths',     dtype=int,   label='Deaths'),
+            ss.Result('prevalence',     dtype=float, label='Prevalence'),
         )
         return
 
-    def update_results(self):
-        super().update_results()
+    def step(self):
         ti = self.ti
-        self.results.n_not_at_risk[ti] = np.count_nonzero(self.not_at_risk)
-        self.results.prevalence[ti]    = np.count_nonzero(self.affected)/len(self.sim.people)
-        self.results.new_deaths[ti]    = np.count_nonzero(self.ti_dead == ti)
-        return
+
+        # Infection
+        susceptible = (~self.infected).uids
+        infections = self.pars.p_acquire.filter(susceptible)
+        self.infected[infections] = True
+        self.ti_infected[infections] = ti
+
+        # Death
+        deaths = self.pars.p_death.filter(infections)
+        self.sim.people.request_death(deaths)
+        self.ti_dead[deaths] = ti
+
+        # Results
+        self.results.new_infections[ti] = len(infections)
+        self.results.new_deaths[ti] = len(deaths)
+        self.results.prevalence[self.ti] = np.count_nonzero(self.infected)/len(self.sim.people)
+
+        return infections
 
 
 class Measles(SimpleDisease):
-    def init_pre(self, *args, **kwargs):
-        super().init_pre(label='Measles', *args, **kwargs)
+    def __init__(self, pars=None, **kwargs):
+        super().__init__()
+        self.define_pars( # TODO: load from sheet
+            label = 'Measles',
+            p_acquire = ss.peryear(0.5),
+            p_death = 0.07,
+        )
         return
 
 
 class Meningitis(SimpleDisease):
-    def init_pre(self, *args, **kwargs):
-        super().init_pre(label='Meningitis', *args, **kwargs)
+    def __init__(self, pars=None, **kwargs):
+        super().__init__()
+        self.define_pars( # TODO: load from sheet
+            label = 'Meningitis',
+            p_acquire = ss.peryear(0.0005),
+            p_death = 0.5,
+        )
         return
 
 
 class YellowFever(SimpleDisease):
-    def init_pre(self, *args, **kwargs):
-        super().init_pre(label='Yellow fever', *args, **kwargs)
+    def __init__(self, pars=None, **kwargs):
+        super().__init__()
+        self.define_pars( # TODO: load from sheet
+            label = 'Yellow fever',
+            p_acquire = ss.peryear(0.0005),
+            p_death = 0.4,
+        )
         return
 
 
 class Malnutrition(ss.Module):
-
     def __init__(self, pars=None, **kwargs):
         super().__init__()
         self.update_pars(pars=pars, **kwargs)
@@ -145,3 +102,7 @@ class Malnutrition(ss.Module):
             ss.State('malnourished', label='Malnourished', default=ss.bernoulli(p=0.05)), # TODO: load from data
         )
         return
+
+    def step(self):
+        """ Malnutrition is static for now """
+        pass

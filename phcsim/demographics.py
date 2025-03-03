@@ -50,19 +50,22 @@ def map_data(which, d):
     return df
 
 
-class Births(ss.Births): # TODO: use age-specific data by subclassing get_births()
+class Births(ss.Births):
 
-    def __init__(self, scale_factor=1.0, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, pars=None, scale_factor=1.0, **kwargs):
+        super().__init__()
         self.define_pars(
+            inherit = False,
+            unit = 'month',
             scale_factor = scale_factor
         )
+        self.update_pars(pars, **kwargs)
         return
 
     def init_pre(self, sim=None, d=None):
         """ Initialize including the data """
         if sim:
-            super().init_pre(sim)
+            ss.Demographics.init_pre(self, sim) # TODO: make more elegant
             d = sim.d
 
         self.df = map_data('fertility', d)
@@ -88,6 +91,16 @@ class Births(ss.Births): # TODO: use age-specific data by subclassing get_births
         if randomize:
             n_new = np.random.poisson(lam=n_new)
         return n_new
+
+    def update_results(self):
+        # New births -- already calculated
+        self.results.new[self.ti] = self.n_births
+
+        # Calculate crude birth rate (CBR)
+        births_per_year = self.n_births/self.sim.t.dt_year
+        denom = self.sim.people.alive.sum()
+        self.results.cbr[self.ti] = births_per_year/denom
+        return
 
 
 class Deaths(ss.Deaths): # TODO: use age-specific data
