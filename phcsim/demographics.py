@@ -125,7 +125,7 @@ class Deaths(ss.Deaths): # TODO: use age-specific data
         df_m = sc.dataframe(age=df.min_age, sex='m', value=df.val_m)
         self.df = df_f.concat(df_m)
         metadata = dict( # TODO: shouldn't be needed
-            data_cols = dict(sex='sex', age='age', value='value'),
+            data_cols = {'sex':'sex', 'age':'age', 'value':'value'},
             sex_keys = {'f':'f', 'm':'m'},
         )
         death_rate = ss.standardize_data(data=self.df, metadata=metadata)
