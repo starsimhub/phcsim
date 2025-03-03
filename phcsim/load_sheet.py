@@ -16,7 +16,7 @@ key_map = {
     'Mortality & incidence': ['Exposure_ByAge', 'Underlying_Mortality_ByAge', 'Acute_diseases_mortality', 'Chronic_diseases_mortality'],
 }
 
-def parse_sheet(df, data_key):
+def parse_block(df, data_key, header=True):
     """
     Find where in the sheet data_key is located, and load the table below it.
 
@@ -52,13 +52,22 @@ def parse_sheet(df, data_key):
             last_row += 1
         while not_empty(row, last_col):
             last_col += 1
-        return last_row-1, last_col-1
+        return last_row, last_col
 
-
+    # Find the start and end of the data block
     row, col = find_start()
     last_row, last_col = find_extent(row, col)
 
+    # Load the data block
     this_df = sc.dataframe(df.iloc[row:last_row, col:last_col])
+
+    assert len(this_df), f'Data {data_key} failed to load'
+
+    # Make the first row the header
+    if header:
+        this_df.columns = this_df.iloc[0].to_list()
+        this_df = this_df.iloc[1:].reset_index(drop=True)
+
     return this_df
 
 
@@ -82,7 +91,7 @@ def load_excel(path=None):
         df = dfs[key]
         for data_key in data_list:
             dk = data_key.lower()
-            d[dk] = parse_sheet(df, data_key)
+            d[dk] = parse_block(df, data_key)
 
     return d
 
