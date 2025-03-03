@@ -93,10 +93,7 @@ class Births(ss.Births):
         return n_new
 
     def update_results(self):
-        # New births -- already calculated
         self.results.new[self.ti] = self.n_births
-
-        # Calculate crude birth rate (CBR)
         births_per_year = self.n_births/self.sim.t.dt_year
         denom = self.sim.people.alive.sum()
         self.results.cbr[self.ti] = births_per_year/denom
