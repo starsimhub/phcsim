@@ -5,7 +5,9 @@ Load the input data sheet
 import pandas as pd
 import sciris as sc
 
-key_map = {
+__all__ = ['data_key_map','load_data']
+
+data_key_map = {
     'Demographics': ['Initial_Population', 'Household_Size', 'Fertility_Mortality_Rates', 'Seasonality_Curves'],
     'Health system contact': ['Intervention_Resources', 'HRH_Requirements'],
     'General model parameters': ['Model_Pars'],
@@ -70,7 +72,7 @@ def parse_block(df, data_key, header=True):
     return this_df
 
 
-def load_excel(path=None):
+def load_data(path=None):
     """
     Load all sheets from the Excel workbook
 
@@ -86,7 +88,7 @@ def load_excel(path=None):
     dfs = pd.read_excel(path, sheet_name=None, header=None)
 
     # Parse the sheets
-    for key, data_list in key_map.items():
+    for key, data_list in data_key_map.items():
         df = dfs[key]
         for data_key in data_list:
             dk = data_key.lower()
@@ -97,4 +99,4 @@ def load_excel(path=None):
 
 if __name__ == '__main__':
     path = '../data/model_inputs.xlsx'
-    d = load_excel(path)
+    d = load_data(path)
