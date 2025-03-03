@@ -2,6 +2,7 @@
 Define births and deaths
 """
 
+import numpy as np
 import sciris as sc
 import starsim as ss
 
@@ -49,10 +50,17 @@ def map_data(which, d):
     return df
 
 
-class Births(ss.Births): # TODO: use data
+class Births(ss.Births): # TODO: use age-specific data by subclassing get_births()
+
+    def __init__(self, scale_factor=1.0, **kwargs):
+        super().__init__(**kwargs)
+        self.define_pars(
+            scale_factor = scale_factor
+        )
+        return
 
     def init_pre(self, sim=None, d=None):
-        super().init_pre(sim=sim)
+        """ Initialize including the data """
         if sim:
             super().init_pre(sim)
             d = sim.d
@@ -60,8 +68,29 @@ class Births(ss.Births): # TODO: use data
         self.df = map_data('fertility', d)
         return
 
+    def get_births(self, randomize=True):
+        """
+        Extract the right birth rates to use and translate it into a number of people to add.
+        """
+        sim = self.sim
+        df = self.df
+        ages = sim.people.age[sim.people.female] # Get female ages
+        age_bins = df.min_age.values.astype(float)
+        probs = df.val.values.astype(float)
+        probs = sc.cat(probs, 0) # Add an extra zero # TODO: make more elegant
+        categories = np.digitize(ages, age_bins)
+        age_probs = probs[categories]
 
-class Deaths(ss.Deaths): # TODO: use data
+        # Final calculation, corrected for time
+        factor = ss.time_ratio(unit1=self.t.unit, dt1=self.t.dt, unit2='year', dt2=1.0)
+        n_new = age_probs.sum() * factor
+
+        if randomize:
+            n_new = np.random.poisson(lam=n_new)
+        return n_new
+
+
+class Deaths(ss.Deaths): # TODO: use age-specific data
 
     def init_pre(self, sim=None, d=None):
         if sim:

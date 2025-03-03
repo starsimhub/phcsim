@@ -2,20 +2,32 @@
 Customization of Starsim Sim object
 """
 
+import sciris as sc
 import starsim as ss
 import phcsim as phc
 
 class Sim(ss.Sim):
-    def __init__(self, path=None, demographics='default', diseases='default', connectors='default', **kwargs):
+    def __init__(self, path=None, demographics='default', diseases='default', connectors='default', **kw):
+        kw = sc.objdict()
         self.path = path
         self.d = phc.load_data(path)
+        df = self.d['model_pars']
+        keys = df.Parameter
+        vals = df.Value
+        data_pars = {k:v for k,v in zip(keys, vals)}
+        pars = dict(
+            start = ss.date(data_pars['Start year']),
+            stop = ss.date(data_pars['End year']),
+            unit = data_pars['Time unit'],
+        )
+        kw.update(pars)
         if demographics == 'default':
-            demographics = [phc.Births(), phc.Deaths()]
+            kw.demographics = [phc.Births(), phc.Deaths()]
         if diseases == 'default':
-            diseases = [phc.Measles(), phc.Meningitis(), phc.YellowFever(), phc.HPV()]
+            kw.diseases = [phc.Measles(), phc.Meningitis(), phc.YellowFever(), phc.HPV()]
         if connectors == 'default':
-            connectors = [phc.Vaccines(), phc.HealthSystem()]
-        super().__init__(**kwargs)
+            kw.connectors = [phc.Vaccines(), phc.HealthSystem()]
+        super().__init__(**kw)
         return
 
     def init_people(self, verbose=None, **kwargs):

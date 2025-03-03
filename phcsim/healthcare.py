@@ -6,9 +6,12 @@ import starsim as ss
 
 __all__ = ['Vaccines', 'HealthSystem']
 
+
 class Vaccines(ss.Module):
-    pass
+    def step(self):
+        pass
 
 
 class HealthSystem(ss.Module):
-    pass
+    def step(self):
+        pass

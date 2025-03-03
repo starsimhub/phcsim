@@ -10,9 +10,9 @@ import phcsim as phc
 __all__ = ['data_key_map', 'load_data', 'warn']
 
 data_key_map = {
+    'General model parameters': ['Model_Pars'],
     'Demographics': ['Initial_Population', 'Fertility_Rates', 'Mortality_Rates', 'Household_Size', 'Seasonality_Curves'],
     'Health system contact': ['Intervention_Resources', 'HRH_Requirements'],
-    'General model parameters': ['Model_Pars'],
     'System constraints': ['Weekly_Hours_ByCadre', 'Supply_Chain'],
     'Need & demand': ['Need_And_Demand'],
     'Diseases': ['Disease_Trajectories', 'Disease_AcuteOrChronic'],
