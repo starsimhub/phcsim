@@ -19,6 +19,7 @@ class People(ss.People):
 
 
 def map_data(which, d):
+    """ Map data for births and deaths """
 
     if d is None:
         errormsg = 'Must supply a sim, or else the data file'
@@ -48,16 +49,20 @@ def map_data(which, d):
     return df
 
 
-class Births(ss.Demographics):
+class Births(ss.Births): # TODO: use data
+
     def init_pre(self, sim=None, d=None):
+        super().init_pre(sim=sim)
         if sim:
             super().init_pre(sim)
             d = sim.d
+
         self.df = map_data('fertility', d)
         return
 
 
-class Deaths(ss.Demographics):
+class Deaths(ss.Deaths): # TODO: use data
+
     def init_pre(self, sim=None, d=None):
         if sim:
             super().init_pre(sim)
