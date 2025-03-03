@@ -9,7 +9,13 @@ __all__ = ['People', 'Births', 'Deaths']
 
 
 class People(ss.People):
-    pass
+    def __init__(self, n_agents, data=None, extra_states=None):
+        if data is not None:
+            if isinstance(data, dict): # Typical use case: use sim.d
+                init_pop = data['initial_population']
+                data = init_pop.F # TODO: use separate male and female age distributions
+        super().__init__(n_agents=n_agents, age_data=data, extra_states=extra_states)
+        return
 
 
 def map_data(which, d):
