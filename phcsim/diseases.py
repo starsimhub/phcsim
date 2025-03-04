@@ -14,8 +14,8 @@ class SimpleDisease(ss.Disease):
     def __init__(self, pars=None, **kwargs):
         super().__init__()
         self.define_pars(
-            p_acquire = ss.bernoulli(p=ss.peryear(0.3)), # Probability of acquisition per timestep
-            p_death = ss.bernoulli(p=0.1), # Probability of death per infection
+            p_acquire = ss.bernoulli(p=ss.peryear(0.0)), # Probability of acquisition per timestep; placeholder
+            p_death = ss.bernoulli(p=0.0), # Probability of death per infection; placeholder
         )
         self.update_pars(pars=pars, **kwargs)
 
@@ -23,8 +23,8 @@ class SimpleDisease(ss.Disease):
             ss.State('infected', label='Infected'),
             ss.FloatArr('ti_infected', label='Time of infection'),
             ss.FloatArr('ti_dead', label='Time of death'),
-            ss.FloatArr('rel_sus', label='Relative susceptability'),
-            ss.FloatArr('rel_death', label='Relative mortality'),
+            ss.FloatArr('rel_sus', default=1.0, label='Relative susceptability'),
+            ss.FloatArr('rel_death', default=1.0, label='Relative mortality'),
         )
         return
 
@@ -44,13 +44,14 @@ class SimpleDisease(ss.Disease):
         ti = self.ti
 
         # Infection
-        susceptible = (~self.infected).uids
-        infections = self.pars.p_acquire.filter(susceptible)
+        susceptible = (~self.infected).uids # TODO: refactor
+        n_sus = len(susceptible)
+        infections = susceptible[(self.pars.p_acquire.pars.p * self.rel_sus[susceptible]) > np.random.rand(n_sus)]
         self.infected[infections] = True
         self.ti_infected[infections] = ti
 
         # Death
-        deaths = self.pars.p_death.filter(infections)
+        deaths = infections[(self.pars.p_death.pars.p * self.rel_sus[infections]) > np.random.rand(len(infections))]
         self.sim.people.request_death(deaths)
         self.ti_dead[deaths] = ti
 

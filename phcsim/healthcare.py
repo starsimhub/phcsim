@@ -105,45 +105,60 @@ class Products(ss.Module):
 
 class HealthSystem(ss.Module):
 
+    def __init__(self, pars=None, *args, **kwargs):
+        super().__init__()
+        self.define_pars( # TODO: load from sheet
+            operational = True,
+            p_epi1 = ss.bernoulli(0.5),
+            p_epi2 = ss.bernoulli(0.6),
+            p_epi3 = ss.bernoulli(0.5),
+            p_epi4 = ss.bernoulli(0.5),
+            p_epi5 = ss.bernoulli(0.6),
+            p_epi6 = ss.bernoulli(0.3),
+        )
+        self.define_states(
+            ss.BoolArr('epi1'),
+            ss.BoolArr('epi2'),
+            ss.BoolArr('epi3'),
+            ss.BoolArr('epi4'),
+            ss.BoolArr('epi5'),
+            ss.BoolArr('epi6'),
+        )
+        self.product_map = sc.objdict(
+            epi1 = ['vitamin_a'],
+            epi2 = ['mcv_1', 'yellow_fever_vaccine', 'meningitis_vaccine'],
+            epi3 = ['vitamin_a'],
+            epi4 = ['mcv_2'],
+            epi5 = ['hpv_vaccine_1'],
+            epi6 = ['hpv_vaccine_2'],
+        )
+        self.epi_keys = self.product_map.keys()
+        self.update_pars(pars=pars, **kwargs)
+        return
+
     def init_pre(self, sim=None, d=None):
         """ Initialize including the data """
         if sim:
             super().init_pre(sim)
             d = sim.d
 
-        # # Get the data
-        # df = d['disease_trajectories']
-
-        # mapping = {
-        #     'disease': 'Condition',
-        #     'product': 'Preventative intervention',
-        #     'rel_death': 'Mortality rate modifier (efficacy)',
-        #     'rel_sus': 'Disease rate modifier (efficacy)',
-        #     'malnutrition': 'Malnutrition efficacy reduction (multiplier)'
-        # }
-
-        # df = sc.dataframe({k:df[v] for k,v in mapping.items()})
-
-        # # Map disease names and product names to internal keys
-        # df['disease'] = df['disease'].map(phc.disease_map)
-        # df['product'] = df['product'].map(self.label_to_key)
-
-        # # Convert dataframe to dictionary keyed by product
-        # data = sc.objdict()
-        # for i, row in df.iterrows():
-        #     product = row['product']
-        #     data[product] = sc.objdict(
-        #         disease = row['disease'],
-        #         rel_death = row['rel_death'],
-        #         rel_sus = row['rel_sus'],
-        #         rel_mal = row['malnutrition']
-        #     )
-
-        # # Store results
-        # self.df = df
-        # self.data = data
+        # Get the data
+        self.df = d['need_and_demand_routine']
+        self.products = sim.connectors.products # Create a link to make this easier
         return
 
-
-    def step(self):
-        pass
+    def step(self, verbose=True):
+        if self.pars.operational:
+            for epi_key in self.epi_keys:
+                p_key = f'p_{epi_key}'
+                eligible = (~self[epi_key]).uids
+                if len(eligible):
+                    self[epi_key][eligible] = True
+                    prob = self.pars[p_key]
+                    received = prob.filter(eligible)
+                    if len(received):
+                        for product in self.product_map[epi_key]:
+                            self.products.apply_product(product, received)
+                            if verbose:
+                                print(f'DEBUG: t={self.ti} epi={epi_key} product={product} received={len(received)}')
+        return
