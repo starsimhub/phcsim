@@ -6,6 +6,7 @@ import sciris as sc
 import phcsim as phc
 
 do_plot = False
+sc.options(dpi=200)
 
 
 def test_basic_sim(do_plot=do_plot):
