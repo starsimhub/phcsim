@@ -70,7 +70,7 @@ class Products(ss.Module):
         """ Dynamics controlled by HealthSystem and apply_product() """
         pass
 
-    def apply_product(self, product, uids, verbose=True):
+    def apply_product(self, product, uids, verbose=False):
         """ Apply the product to the disease for the selected people """
         prod = self.data[product]
         dis = self.sim.diseases
@@ -147,7 +147,7 @@ class HealthSystem(ss.Module):
         self.products = sim.connectors.products # Create a link to make this easier
         return
 
-    def step(self, verbose=True):
+    def step(self, verbose=False):
         if self.pars.operational:
             for epi_key in self.epi_keys:
                 p_key = f'p_{epi_key}'

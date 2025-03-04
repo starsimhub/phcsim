@@ -7,7 +7,6 @@ import starsim as ss
 import phcsim as phc
 
 do_plot = False
-sc.options(dpi=200)
 
 
 def test_basic_sim(do_plot=do_plot):
@@ -39,7 +38,7 @@ if __name__ == '__main__':
 
     T = sc.timer()
 
-    # sim = test_basic_sim(do_plot=do_plot)
+    sim = test_basic_sim(do_plot=do_plot)
     msim = test_multisim(do_plot=do_plot)
 
     T.toc()
