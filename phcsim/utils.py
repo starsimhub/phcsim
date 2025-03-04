@@ -7,7 +7,7 @@ import pandas as pd
 import sciris as sc
 import phcsim as phc
 
-__all__ = ['data_key_map', 'load_data', 'warn']
+__all__ = ['data_key_map', 'disease_map', 'load_data', 'warn']
 
 data_key_map = {
     'General model parameters': ['Model_Pars'],
@@ -18,6 +18,15 @@ data_key_map = {
     'Diseases': ['Disease_Trajectories', 'Disease_AcuteOrChronic'],
     'Mortality & incidence': ['Exposure_ByAge', 'Underlying_Mortality_ByAge', 'Acute_diseases_mortality', 'Chronic_diseases_mortality'],
 }
+
+disease_map = {
+    'Measles': 'measles',
+    'Meningitis': 'meningitis',
+    'Yellow fever': 'yellowfever',
+    'HPV': 'hpv',
+}
+
+warn_default_file = False
 
 def parse_block(df, data_key, header=True):
     """
@@ -87,7 +96,8 @@ def load_data(path=None):
     if path is None:
         path = phc.root() / 'data' / 'model_inputs.xlsx'
         msg = f'No path provided, using default: {path}'
-        phc.warn(msg)
+        if warn_default_file:
+            phc.warn(msg)
 
     # Load all sheets into a dictionary of dataframes
     dfs = pd.read_excel(path, sheet_name=None, header=None)

@@ -2,7 +2,9 @@
 Define health system
 """
 
+import sciris as sc
 import starsim as ss
+import phcsim as phc
 
 __all__ = ['Products', 'HealthSystem']
 
@@ -34,20 +36,42 @@ class Products(ss.Module):
         # Get the data
         df = d['disease_trajectories']
 
-        # mapping = {
-        #     'min_age': 'Age Start',
-        #     'max_age': 'Age End',
-        #     'val_f': 'Female Value',
-        #     'val_m': 'Male Value',
-        # }
+        mapping = {
+            'disease': 'Condition',
+            'product': 'Preventative intervention',
+            'rel_death': 'Mortality rate modifier (efficacy)',
+            'rel_sus': 'Disease rate modifier (efficacy)',
+            'malnutrition': 'Malnutrition efficacy reduction (multiplier)'
+        }
 
-        # df = sc.dataframe({k:df[v] for k,v in mapping.items()})
+        df = sc.dataframe({k:df[v] for k,v in mapping.items()})
 
+        # Map disease names and product names to internal keys
+        df['disease'] = df['disease'].map(phc.disease_map)
+        df['product'] = df['product'].map(self.label_to_key)
+
+        # Convert dataframe to dictionary keyed by product
+        data = sc.objdict()
+        for i, row in df.iterrows():
+            product = row['product']
+            data[product] = sc.objdict(
+                disease = row['disease'],
+                rel_death = row['rel_death'],
+                rel_sus = row['rel_sus'],
+                malnutrition = row['malnutrition']
+            )
+
+        # Store results
         self.df = df
+        self.data = data
         return
 
     def step(self):
+        """ Dynamics controlled by HealthSystem and apply_product() """
         pass
+
+    def apply_product(self, product, uids):
+        """ Apply the product to the
 
 
 class HealthSystem(ss.Module):

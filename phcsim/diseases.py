@@ -3,10 +3,9 @@ Define diseases
 """
 
 import numpy as np
-import sciris as sc
 import starsim as ss
 
-__all__ = ['Measles', 'Meningitis', 'YellowFever', 'Malnutrition']
+__all__ = ['Measles', 'Meningitis', 'YellowFever', 'HPV', 'Malnutrition']
 
 
 class SimpleDisease(ss.Disease):
@@ -24,6 +23,8 @@ class SimpleDisease(ss.Disease):
             ss.State('infected', label='Infected'),
             ss.FloatArr('ti_infected', label='Time of infection'),
             ss.FloatArr('ti_dead', label='Time of death'),
+            ss.FloatArr('rel_sus', label='Relative susceptability'),
+            ss.FloatArr('rel_death', label='Relative mortality'),
         )
         return
 
@@ -92,6 +93,18 @@ class YellowFever(SimpleDisease):
             p_death = 0.4,
         )
         return
+
+
+class HPV(SimpleDisease):
+    def __init__(self, pars=None, **kwargs):
+        super().__init__()
+        self.define_pars( # TODO: load from sheet
+            label = 'HPV',
+            p_acquire = ss.peryear(0.0),
+            p_death = 0.0,
+        )
+        return
+
 
 
 class Malnutrition(ss.Module):
