@@ -35,6 +35,7 @@ def test_multisim(do_plot=do_plot):
 if __name__ == '__main__':
 
     do_plot = True
+    sc.options(jupyter=True)
 
     T = sc.timer()
 
@@ -42,3 +43,4 @@ if __name__ == '__main__':
     msim = test_multisim(do_plot=do_plot)
 
     T.toc()
+

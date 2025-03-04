@@ -9,16 +9,21 @@ __all__ = ['Measles', 'Meningitis', 'YellowFever', 'HPV', 'Malnutrition']
 
 
 class SimpleDisease(ss.Disease):
-    """ A simple disease that is applied probabilistically; based on ss.NCD """
+    """ A simple disease that is applied probabilistically; loosely based on ss.NCD """
 
     def __init__(self, pars=None, **kwargs):
         super().__init__()
-        self.define_pars(
-            p_acquire = ss.bernoulli(p=ss.peryear(0.0)), # Probability of acquisition per timestep; placeholder
-            p_death = ss.bernoulli(p=0.0), # Probability of death per infection; placeholder
-        )
         self.update_pars(pars=pars, **kwargs)
 
+        # Define disease parameters
+        self.define_pars(
+            p_acquire = 0.0, # Probability of acquisition per timestep; placeholder
+            p_death = 0.0, # Probability of death per infection; placeholder
+        )
+        self.p_acquire = ss.bernoulli(p = lambda self, sim, uids: self.pars.p_acquire * self.rel_sus[uids])
+        self.p_death = ss.bernoulli(p = lambda self, sim, uids: self.pars.p_death * self.rel_death[uids])
+
+        # Define disease states
         self.define_states(
             ss.State('infected', label='Infected'),
             ss.FloatArr('ti_infected', label='Time of infection'),
@@ -29,9 +34,6 @@ class SimpleDisease(ss.Disease):
         return
 
     def init_results(self):
-        """
-        Initialize results
-        """
         super().init_results()
         self.define_results(
             ss.Result('new_infections', dtype=int,   label='Infections'),
@@ -45,13 +47,12 @@ class SimpleDisease(ss.Disease):
 
         # Infection
         susceptible = (~self.infected).uids # TODO: refactor
-        n_sus = len(susceptible)
-        infections = susceptible[(self.pars.p_acquire.pars.p * self.rel_sus[susceptible]) > np.random.rand(n_sus)]
+        infections = self.p_acquire.filter(susceptible)
         self.infected[infections] = True
         self.ti_infected[infections] = ti
 
         # Death
-        deaths = infections[(self.pars.p_death.pars.p * self.rel_sus[infections]) > np.random.rand(len(infections))]
+        deaths = self.p_death.filter(infections) # Applied only to people just infected
         self.sim.people.request_death(deaths)
         self.ti_dead[deaths] = ti
 
