@@ -12,7 +12,6 @@ sc.options(dpi=200)
 def test_basic_sim(do_plot=do_plot):
     sc.heading('Testing basic sim')
     sim = phc.Sim(n_agents=10e3)
-    sim.init()
     sim.run()
     print(sim.results)
     if do_plot:
