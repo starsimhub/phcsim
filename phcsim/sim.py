@@ -26,13 +26,25 @@ class Sim(ss.Sim):
         )
         kw.update(pars)
 
-        # Handle defaults
+        # Handle defaults -- the structure of PHCsim
         if demographics == 'default':
-            kw.demographics = [phc.Deaths(), phc.Births()]
+            kw.demographics = [
+                phc.Deaths(),
+                phc.Births(),
+            ]
         if diseases == 'default':
-            kw.diseases = [phc.Malnutrition(), phc.Measles(), phc.Meningitis(), phc.YellowFever()]
+            kw.diseases = [
+                phc.Malnutrition(),
+                phc.Measles(),
+                phc.Meningitis(),
+                phc.YellowFever(),
+                phc.HPV(),
+            ]
         if connectors == 'default':
-            kw.connectors = [phc.Vaccines(), phc.HealthSystem()]
+            kw.connectors = [
+                phc.Products(),
+                phc.HealthSystem(),
+            ]
 
         # Initialize the sim
         super().__init__(**kw)

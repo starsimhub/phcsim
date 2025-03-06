@@ -7,17 +7,26 @@ import pandas as pd
 import sciris as sc
 import phcsim as phc
 
-__all__ = ['data_key_map', 'load_data', 'warn']
+__all__ = ['data_key_map', 'disease_map', 'load_data', 'warn']
 
 data_key_map = {
     'General model parameters': ['Model_Pars'],
     'Demographics': ['Initial_Population', 'Fertility_Rates', 'Mortality_Rates', 'Household_Size', 'Seasonality_Curves'],
     'Health system contact': ['Intervention_Resources', 'HRH_Requirements'],
     'System constraints': ['Weekly_Hours_ByCadre', 'Supply_Chain'],
-    'Need & demand': ['Need_And_Demand'],
+    'Need & demand': ['Need_And_Demand_Routine', 'Need_And_Demand_Acute'],
     'Diseases': ['Disease_Trajectories', 'Disease_AcuteOrChronic'],
     'Mortality & incidence': ['Exposure_ByAge', 'Underlying_Mortality_ByAge', 'Acute_diseases_mortality', 'Chronic_diseases_mortality'],
 }
+
+disease_map = {
+    'Measles': 'measles',
+    'Meningitis': 'meningitis',
+    'Yellow fever': 'yellowfever',
+    'HPV': 'hpv',
+}
+
+warn_default_file = False
 
 def parse_block(df, data_key, header=True):
     """
@@ -87,7 +96,8 @@ def load_data(path=None):
     if path is None:
         path = phc.root() / 'data' / 'model_inputs.xlsx'
         msg = f'No path provided, using default: {path}'
-        phc.warn(msg)
+        if warn_default_file:
+            phc.warn(msg)
 
     # Load all sheets into a dictionary of dataframes
     dfs = pd.read_excel(path, sheet_name=None, header=None)
@@ -98,7 +108,11 @@ def load_data(path=None):
         df = dfs[key]
         for data_key in data_list:
             dk = data_key.lower()
-            d[dk] = parse_block(df, data_key)
+            try:
+                d[dk] = parse_block(df, data_key)
+            except Exception as E:
+                errormsg = f'Could not read {data_key} from sheet {key}, please check the spreadsheet'
+                raise ValueError(errormsg) from E
 
     return d
 

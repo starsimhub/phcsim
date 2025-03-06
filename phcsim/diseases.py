@@ -3,34 +3,37 @@ Define diseases
 """
 
 import numpy as np
-import sciris as sc
 import starsim as ss
 
-__all__ = ['Measles', 'Meningitis', 'YellowFever', 'Malnutrition']
+__all__ = ['Measles', 'Meningitis', 'YellowFever', 'HPV', 'Malnutrition']
 
 
 class SimpleDisease(ss.Disease):
-    """ A simple disease that is applied probabilistically; based on ss.NCD """
+    """ A simple disease that is applied probabilistically; loosely based on ss.NCD """
 
     def __init__(self, pars=None, **kwargs):
         super().__init__()
-        self.define_pars(
-            p_acquire = ss.bernoulli(p=ss.peryear(0.3)), # Probability of acquisition per timestep
-            p_death = ss.bernoulli(p=0.1), # Probability of death per infection
-        )
         self.update_pars(pars=pars, **kwargs)
 
+        # Define disease parameters
+        self.define_pars(
+            p_acquire = 0.0, # Probability of acquisition per timestep; placeholder
+            p_death = 0.0, # Probability of death per infection; placeholder
+        )
+        self.p_acquire = ss.bernoulli(p = lambda self, sim, uids: self.pars.p_acquire * self.rel_sus[uids])
+        self.p_death = ss.bernoulli(p = lambda self, sim, uids: self.pars.p_death * self.rel_death[uids])
+
+        # Define disease states
         self.define_states(
             ss.State('infected', label='Infected'),
             ss.FloatArr('ti_infected', label='Time of infection'),
             ss.FloatArr('ti_dead', label='Time of death'),
+            ss.FloatArr('rel_sus', default=1.0, label='Relative susceptability'),
+            ss.FloatArr('rel_death', default=1.0, label='Relative mortality'),
         )
         return
 
     def init_results(self):
-        """
-        Initialize results
-        """
         super().init_results()
         self.define_results(
             ss.Result('new_infections', dtype=int,   label='Infections'),
@@ -43,13 +46,13 @@ class SimpleDisease(ss.Disease):
         ti = self.ti
 
         # Infection
-        susceptible = (~self.infected).uids
-        infections = self.pars.p_acquire.filter(susceptible)
+        susceptible = (~self.infected).uids # TODO: refactor
+        infections = self.p_acquire.filter(susceptible)
         self.infected[infections] = True
         self.ti_infected[infections] = ti
 
         # Death
-        deaths = self.pars.p_death.filter(infections)
+        deaths = self.p_death.filter(infections) # Applied only to people just infected
         self.sim.people.request_death(deaths)
         self.ti_dead[deaths] = ti
 
@@ -92,6 +95,18 @@ class YellowFever(SimpleDisease):
             p_death = 0.4,
         )
         return
+
+
+class HPV(SimpleDisease):
+    def __init__(self, pars=None, **kwargs):
+        super().__init__()
+        self.define_pars( # TODO: load from sheet
+            label = 'HPV',
+            p_acquire = ss.peryear(0.0),
+            p_death = 0.0,
+        )
+        return
+
 
 
 class Malnutrition(ss.Module):

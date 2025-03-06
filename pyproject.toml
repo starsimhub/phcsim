@@ -7,7 +7,7 @@ name = "PHCsim"
 dynamic = ["version"]
 description = "Primary Health Care Simulator"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {file = "LICENSE"}
 keywords = ["agent-based model", "simulation", "primary health care"]
 
@@ -29,10 +29,10 @@ classifiers = [
 ]
 
 dependencies = [
+    "starsim>=2.3.2",
     "numpy",
     "pandas",
     "sciris",
-    "starsim",
     "matplotlib",
 ]
 
