@@ -100,7 +100,7 @@ class Births(ss.Births):
         return
 
 
-class Deaths(ss.Deaths): # TODO: use age-specific data
+class Deaths(ss.Deaths):
 
     def __init__(self, pars=None, **kwargs):
         super().__init__()
@@ -129,6 +129,4 @@ class Deaths(ss.Deaths): # TODO: use age-specific data
         death_rate = death_rate.unstack(level='age')
         self.death_rate_data = death_rate
 
-        # self.update_pars(
-        # )
         return

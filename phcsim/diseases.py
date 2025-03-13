@@ -46,7 +46,7 @@ class SimpleDisease(ss.Disease):
         ti = self.ti
 
         # Infection
-        susceptible = (~self.infected).uids # TODO: refactor
+        susceptible = (~self.infected).uids
         infections = self.p_acquire.filter(susceptible)
         self.infected[infections] = True
         self.ti_infected[infections] = ti
